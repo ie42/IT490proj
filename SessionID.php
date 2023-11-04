@@ -23,3 +23,37 @@ if (isset($_POST['sessionid'])) {
     // For example, redirect the user to the login page.
 }
 ?>
+/* This CODE NEEDS TO BNE ADDED TO FRONT END FOR THIS TO WORK
+function validateSession() {
+    sessionData.type = "validate_session";
+    console.log(sessionData);
+
+    $.ajax({
+        url: 'sessionValidate.php',
+        method: 'POST',
+        data: sessionData,
+        dataType: 'json',
+        success: function (result) {
+            if (result.returnCode != "1") {
+                document.cookie = "sessionid=;username=;path='/'";
+                location.href = "index.html";
+            }
+        },
+        error: function () {
+            console.log("Error validating session");
+        }
+    });
+}
+
+function logout() {
+    sessionData.type = "logout";
+
+    $.ajax({
+        url: 'sessionValidate.php',
+        method: 'POST',
+        data: sessionData,
+        dataType: 'json',
+        success: function (result) {
+            if (result.returnCode === "
+*/
+// THIS IS FOR USING SESSION ID TO USE THE DATA FOR A USER DATA SUCH AS RECOMMENDATIONS OR PROFILE DATA
