@@ -3,7 +3,7 @@ include 'databaseconnect.inc';
 
 // Fetch the user's favorite movie and genre from the database
 $sessionid = $userid; // Replace with the actual user's ID or a user identification method
-$sql = "SELECT favorite_movie, favorite_genre FROM user_preferences WHERE user_id = ?";
+$sql = "SELECT Profiles.FavoriteMovie, Prrofiles.FavoriteGenre FROM Profiles WHERE user_id = ?";
 $stmt = $pdo->prepare($sql);
 $stmt->execute([$userID]);
 $userPreferences = $stmt->fetch(PDO::FETCH_ASSOC);
