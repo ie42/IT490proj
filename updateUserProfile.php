@@ -20,7 +20,7 @@ function updateProfileSettings($sessionID, $data) {
     }
 
     // Update the user's settings
-    $updateQuery = "UPDATE Users SET FavoriteDirector = ?, FavoriteGenre = ?, FavoriteMovie = ?, FavoriteActor = ?, Bio = ? WHERE SessionID = ?";
+    $updateQuery = "UPDATE Profiles SET FavoriteDirector = ?, FavoriteGenre = ?, FavoriteMovie = ?, FavoriteActor = ?, Bio = ? WHERE SessionID = ?";
     
     if ($updateStmt = $mysqli->prepare($updateQuery)) {
         $updateStmt->bind_param("ssssss", $data['FavoriteDirector'], $data['FavoriteGenre'], $data['FavoriteMovie'], $data['FavoriteActor'], $data['Bio'], $sessionID);
