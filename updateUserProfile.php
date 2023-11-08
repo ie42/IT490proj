@@ -5,7 +5,7 @@ function updateProfileSettings($sessionID, $data) {
     $mysqli = dbConnect(); // Establish a database connection
 
     // Ensure that the user associated with the session ID exists
-    $checkQuery = "SELECT UserID FROM Users WHERE SessionID = ?";
+    $checkQuery = "SELECT UserID FROM Profiles WHERE SessionID = ?";
     if ($checkStmt = $mysqli->prepare($checkQuery)) {
         $checkStmt->bind_param("s", $sessionID);
         $checkStmt->execute();
