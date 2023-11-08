@@ -1,53 +1,48 @@
 <?php
-require_once('dbConnect.php');
+require_once('dbConnect.php'); // Include your database connection code
 
-function dbConnect() {
-    $mysqli = dbConnect();
-}
+function getUserProfileData($userId) {
+    $mysqli = dbConnect(); // Establish a database connection
 
-function validateLogin($username, $password) {
-    $mysqli = dbConnect();
-    $query = "SELECT UserID, PasswordHash FROM Accounts WHERE username = ?";
+    // Query to retrieve user data based on the user's ID
+    $query = "SELECT FavoriteDirector, FavoriteGenre, FavoriteMovie, FavoriteActor, Bio FROM Users WHERE UserID = ?";
     
     if ($stmt = $mysqli->prepare($query)) {
-        $stmt->bind_param("s", $username);
+        $stmt->bind_param("i", $userId);
         $stmt->execute();
-        $stmt->bind_result($userID, $storedPassword);
+        $stmt->bind_result($favoriteDirector, $favoriteGenre, $favoriteMovie, $favoriteActor, $bio);
         $stmt->fetch();
         $stmt->close();
+
+        // Format the data into an associative array
+        $userData = [
+            "FavoriteDirector" => $favoriteDirector,
+            "FavoriteGenre" => $favoriteGenre,
+            "FavoriteMovie" => $favoriteMovie,
+            "FavoriteActor" => $favoriteActor,
+            "Bio" => $bio,
+        ];
+
+        return $userData;
     }
 
-    if (empty($storedPassword) || !password_verify($password, $storedPassword)) {
-        return ["status" => 401, "message" => "Invalid credentials"];
-    }
-
-    // Store the user's ID in the $sessionid variable
-    $sessionid = $userID;
-
-    return ["status" => 200, "message" => "Login successful"];
+    return null; // Return null if user not found or an error occurred
 }
 
-if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    $data = json_decode(file_get_contents('php://input'), true);
-    
-    if (!isset($data['username']) || !isset($data['password'])) {
-        http_response_code(400);
-        //echo json_encode(["message" => "Missing username or password"]);
-        return json_encode(array("returnCode" => '0', 'message' => "Username already exists, try again"));
-        exit;
-    }
+// Usage example
+$userId = 123; // Replace with the actual user's ID
+$userData = getUserProfileData($userId);
 
-    $username = $data['username'];
-    $password = $data['password'];
-
-    $result = validateLogin($username, $password, $mysqli);
-
-    http_response_code($result['status']);
-    //echo json_encode(["message" => $result['message']);
-    return json_encode(array("returnCode" => '1', 'message' => "Success!"));
+if ($userData) {
+    // Now you can access and display each piece of data individually
+    echo "Favorite Director: " . $userData["FavoriteDirector"] . "<br>";
+    echo "Favorite Genre: " . $userData["FavoriteGenre"] . "<br>";
+    echo "Favorite Movie: " . $userData["FavoriteMovie"] . "<br>";
+    echo "Favorite Actor: " . $userData["FavoriteActor"] . "<br>";
+    echo "Bio: " . $userData["Bio"];
+} else {
+    echo "User not found or an error occurred.";
 }
 
-$mysqli->close();
+$mysqli->close(); // Close the database connection
 ?>
-
-// USING THE SESSION DATA FROM @sessionid THIS CODE WILL PULL A USER'S INFO AND DISPLAY IT IN AN ARRAY FOR FRONT END TO USER HOWEVER THEY DEEM NECCESSARY
