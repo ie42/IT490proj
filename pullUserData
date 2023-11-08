@@ -1,14 +1,14 @@
 <?php
 require_once('dbConnect.php'); // Include your database connection code
 
-function getUserProfileData($userId) {
+function getUserProfileData($sessionID) {
     $mysqli = dbConnect(); // Establish a database connection
 
-    // Query to retrieve user data based on the user's ID
-    $query = "SELECT FavoriteDirector, FavoriteGenre, FavoriteMovie, FavoriteActor, Bio FROM Users WHERE UserID = ?";
+    // Query to retrieve user data based on the session ID
+    $query = "SELECT FavoriteDirector, FavoriteGenre, FavoriteMovie, FavoriteActor, Bio FROM Users WHERE SessionID = ?";
     
     if ($stmt = $mysqli->prepare($query)) {
-        $stmt->bind_param("i", $userId);
+        $stmt->bind_param("s", $sessionID);
         $stmt->execute();
         $stmt->bind_result($favoriteDirector, $favoriteGenre, $favoriteMovie, $favoriteActor, $bio);
         $stmt->fetch();
@@ -29,19 +29,20 @@ function getUserProfileData($userId) {
     return null; // Return null if user not found or an error occurred
 }
 
-// Usage example
-$userId = 123; // Replace with the actual user's ID
-$userData = getUserProfileData($userId);
+// Get the session ID from cookies or from the request data
+$sessionID = $_COOKIE['session_id'] ?? $_POST['session_id']; // Assuming the session ID is stored in a cookie or POST request data
 
-if ($userData) {
-    // Now you can access and display each piece of data individually
-    echo "Favorite Director: " . $userData["FavoriteDirector"] . "<br>";
-    echo "Favorite Genre: " . $userData["FavoriteGenre"] . "<br>";
-    echo "Favorite Movie: " . $userData["FavoriteMovie"] . "<br>";
-    echo "Favorite Actor: " . $userData["FavoriteActor"] . "<br>";
-    echo "Bio: " . $userData["Bio"];
+if ($sessionID) {
+    $userData = getUserProfileData($sessionID);
+
+    if ($userData) {
+        // Now you can access and display each piece of data individually
+        echo json_encode($userData);
+    } else {
+        echo json_encode(["message" => "User not found or an error occurred."]);
+    }
 } else {
-    echo "User not found or an error occurred.";
+    echo json_encode(["message" => "Session ID not found in cookies or request data."]);
 }
 
 $mysqli->close(); // Close the database connection
