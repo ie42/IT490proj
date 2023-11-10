@@ -2,10 +2,7 @@
 // Include your database connection file
 include 'databaseconnect.inc';
 
-// Get the session ID from cookies or from the request data
-$sessionID = $_COOKIE['session_id'] ?? $_POST['session_id']; // Assuming the session ID is stored in a cookie or POST request data
-
-if ($sessionID) {
+function fetchUserProfile($sessionID) {
     // Fetch the user's favorite movie and genre from the database
     $sql = "SELECT Profiles.FavoriteMovie, Profiles.FavoriteGenre, Profiles.FavoriteActor, Profiles.FavoriteDirector FROM Profiles WHERE user_id = ?";
     $stmt = $pdo->prepare($sql);
@@ -34,8 +31,6 @@ if ($sessionID) {
         displayRecommendedMovies($actorDirectorTopMovies, 'Actor and Director');
         displayRecommendedMovies($criteriaTopMovies, 'Actor, Movie, and Director');
     }
-} else {
-    echo "Session ID not found in cookies or request data."; // Handle the case where the session ID is not found
 }
 
 function getTopMovies($baseUrl, $endpoint, $apiKey, $criteria1, $criteria2 = null, $criteria3 = null) {
@@ -69,4 +64,17 @@ function displayRecommendedMovies($movieData, $source) {
         echo "Error fetching movie recommendations based on $source.";
     }
 }
+
+function processRequest() {
+    // Get the session ID from cookies or from the request data
+    $sessionID = $_COOKIE['session_id'] ?? $_POST['session_id']; // Assuming the session ID is stored in a cookie or POST request data
+
+    if ($sessionID) {
+        fetchUserProfile($sessionID);
+    } else {
+        echo "Session ID not found in cookies or request data."; // Handle the case where the session ID is not found
+    }
+}
+
+processRequest();
 ?>
