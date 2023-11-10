@@ -1,6 +1,10 @@
 <?php
 require_once('dbConnect.php'); // Include your database connection code
 
+function dbConnect() {
+    return new mysqli(DB_HOST, DB_USERNAME, DB_PASSWORD, DB_NAME);
+}
+
 function getUserProfileData($sessionID) {
     $mysqli = dbConnect(); // Establish a database connection
 
@@ -29,21 +33,25 @@ function getUserProfileData($sessionID) {
     return null; // Return null if user not found or an error occurred
 }
 
-// Get the session ID from cookies or from the request data
-$sessionID = $_COOKIE['session_id'] ?? $_POST['session_id']; // Assuming the session ID is stored in a cookie or POST request data
+function processRequest() {
+    // Get the session ID from cookies or from the request data
+    $sessionID = $_COOKIE['session_id'] ?? $_POST['session_id']; // Assuming the session ID is stored in a cookie or POST request data
 
-if ($sessionID) {
-    $userData = getUserProfileData($sessionID);
+    if ($sessionID) {
+        $userData = getUserProfileData($sessionID);
 
-    if ($userData) {
-        // Now you can access and display each piece of data individually
-        echo json_encode($userData);
+        if ($userData) {
+            // Now you can access and display each piece of data individually
+            echo json_encode($userData);
+        } else {
+            echo json_encode(["message" => "User not found or an error occurred."]);
+        }
     } else {
-        echo json_encode(["message" => "User not found or an error occurred."]);
+        echo json_encode(["message" => "Session ID not found in cookies or request data."]);
     }
-} else {
-    echo json_encode(["message" => "Session ID not found in cookies or request data."]);
 }
+
+processRequest();
 
 $mysqli->close(); // Close the database connection
 ?>
