@@ -53,17 +53,33 @@ function addToWatchList($accountId, $title, $year, $isMovie, $isTV) {
 
     $conn = new mysqli($servername, $username, $password, $dbname);
 
+    $status = []; 
+
     if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
+        $status['success'] = false;
+        $status['message'] = "Connection failed: " . $conn->connect_error;
+    } else {
+        $sql = "INSERT INTO WatchList (AccountID, Name, Year, isMovie, isTV, TimeCreated, LastModified) VALUES (?, ?, ?, ?, ?, NOW(), NOW())";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("isiii", $accountId, $title, $year, $isMovie, $isTV);
+
+        if ($stmt->execute()) {
+            $status['success'] = true;
+            $status['message'] = "Added successfully.";
+        } else {
+            $status['success'] = false;
+            $status['message'] = "Error: " . $stmt->error;
+        }
+
+        $stmt->close();
     }
-
-    $sql = "INSERT INTO WatchList (AccountID, Name, Year, isMovie, isTV, TimeCreated, LastModified) VALUES (?, ?, ?, ?, ?, NOW(), NOW())";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("isiii", $accountId, $title, $year, $isMovie, $isTV);
-    $stmt->execute();
-
-    $stmt->close();
     $conn->close();
+
+    sendStatusToRabbitMQ(json_encode($status));
+
+    return $status;
+}
+
 }
 function addToWatchedList($accountId, $title, $year, $isMovie, $isTV) {
     global $servername, $username, $password, $dbname;
@@ -77,11 +93,26 @@ function addToWatchedList($accountId, $title, $year, $isMovie, $isTV) {
     $stmt->execute();
     $stmt->close();
     $conn->close();
+    if ($stmt->execute()) {
+        $status['success'] = true;
+        $status['message'] = "Added successfully.";
+    } else {
+        $status['success'] = false;
+        $status['message'] = "Error: " . $stmt->error;
+    }
+
+    $stmt->close();
+}
+$conn->close();
+
+sendStatusToRabbitMQ(json_encode($status));
+
+return $status;
 }
 
 
 function searchMoviesAndTVShows($query) {
-    $apiKey = 'YOUR_TMDB_API_KEY';
+    $apiKey = 'ab0f6b84bbcbbd4066f4fee3eaba248c';
     $url = "https://api.themoviedb.org/3/search/multi?api_key={$apiKey}&query={$query}";
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -94,38 +125,5 @@ function searchMoviesAndTVShows($query) {
         return null;
     }
 }
-
-
-
-
-function handleRabbitMQMessages($configFile) {
-    $config = parse_ini_file($configFile);
-    $host = $config['host'];
-    $port = $config['port'];
-    $user = $config['user'];
-    $pass = $config['password'];
-    $exchange = $config['exchange'];
-    $queue = $config['queue'];
-    $consumerTag = $config['consumerTag'];
-    $connection = new PhpAmqpLib\Connection\AMQPStreamConnection($host, $port, $user, $pass);
-    $channel = $connection->channel();
-    $channel->exchange_declare($exchange, 'direct', false, true, false);
-    $channel->queue_declare($queue, false, true, false, false);
-    $channel->queue_bind($queue, $exchange);
-    $callback = function ($msg) {
-        $accountId = json_decode($msg->body, true)['accountId'];
-        $config = parse_ini_file('dbconnection.inc');
-        $watchListData = getWatchListData($accountId, $config['servername'], $config['username'], $config['password'], $config['dbname']);
-        echo json_encode($watchListData);
-        $msg->ack(); 
-    };
-    $channel->basic_consume($queue, $consumerTag, false, false, false, false, $callback);
-    while ($channel->is_consuming()) {
-        $channel->wait();
-    }
-    $channel->close();
-    $connection->close();
-}
-handleRabbitMQMessages('testRabbitMQ.ini');
 
 ?>
